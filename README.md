@@ -135,3 +135,82 @@ counter = 100;
 // counterが変更されたという事実を知らなければ increment() が 101 を返すことはわからない
 console.log(increment()); // => 101
 ```
+
+### 副作用を伴う命令型関数の改善
+
+以下は、学生のレコード SSN で検索し、ブラウザに表示する命令型関数。
+
+```js
+function showStudent(ssn) {
+  let student = db.find(ssn);
+
+  if (student !== null) {
+    document.querySelector(`${elementId}`).innerHTML = `${student.ssn},
+     ${student.firstname},
+     ${student.lastname}`;
+  } else {
+    throw new Error('Student not found!');
+  }
+}
+
+showStudent('444-44-4444');
+```
+
+上記の関数は不純な関数であり、以下の問題点を有する（副作用を及ぼす）。
+
+- `db`と`elementId`は関数のスコープ外のものを利用している。これらの変数は任意のタイミングで任意の値に変更できるため、`showStudent()`の実行結果も予測しづらい（必ず実行結果が同じになる保証をできない）。そのため、プログラムの信頼性を損ねている。
+- HTML 要素に直接変更を加えている。
+
+この関数に対して以下の改善を施す。
+
+1. 関数を目的毎に分割する（１つの関数は１つの目的を持つように）。
+2. 関数の処理に必要となるすべてのパラメーターを明示的に定義し、副作用を減らす。
+
+```js
+const find = curry((db, id) => {
+  let obj = db.find(id);
+
+  if (obj === null) {
+    throw new Error('Object not found!');
+  }
+});
+
+const csv = student =>
+  `${student.ssn}, ${student.firstname}, ${student.lastname}`;
+
+const append = curry((selector, info) => {
+  document.querySelector(selector).innerHTML = info;
+});
+
+const showStudent = run(append('#student-info'), csv, find(db));
+
+showStudent('444-44-4444');
+```
+
+### 参照透過性と代替性
+
+参照透過性とは、関数が純粋であることを特徴づける性質のこと。
+
+ある関数が同じ入力に対して常に同じ結果を返す場合、その関数は参照透過性を持っていると言える。
+
+以下は参照透過性を持っていない関数の例。
+
+```js
+let counter = 0;
+
+function increment() {
+  return ++counter;
+}
+```
+
+関数の戻り値がスコープ外の`counter`に依存しているため、同じ入力に対して常に同じ結果を返すわけではない。
+
+そのため、参照透過性を持っていない。
+
+この関数に参照透過性を持たせる（純粋関数にする）ためには以下のようにする。
+
+```js
+const increment = counter => counter + 1;
+```
+
+こうすることで、入力値（引数`counter`）が同じであれば、必ず同じ値を返すようになった。
