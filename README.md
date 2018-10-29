@@ -146,8 +146,8 @@ function showStudent(ssn) {
 
   if (student !== null) {
     document.querySelector(`${elementId}`).innerHTML = `${student.ssn},
-     ${student.firstname},
-     ${student.lastname}`;
+      ${student.firstname},
+      ${student.lastname}`;
   } else {
     throw new Error('Student not found!');
   }
@@ -214,3 +214,347 @@ const increment = counter => counter + 1;
 ```
 
 こうすることで、入力値（引数`counter`）が同じであれば、必ず同じ値を返すようになった。
+
+```js
+class Person {
+  constructor(firstName, lastName) {
+    this._firstName = firstName;
+    this._lastName = lastName;
+  }
+
+  get fullName() {
+    return [this._firstName, this._lastName].join(' ');
+  }
+}
+
+class Student extends Person {
+  constructor(firstName, lastName) {
+    super(firstName, lastName);
+  }
+}
+
+const student = new Student('Alonzo', 'Church');
+
+student.fullName; // => Alonzo Church
+```
+
+```js
+class Person {
+  constructor(firstName, lastName) {
+    this._firstName = firstName;
+    this._lastName = lastName;
+  }
+}
+
+class Student extends Person {
+  constructor(firstName, lastName) {
+    super(firstName, lastName);
+  }
+}
+
+const student = new Student('Alonzo', 'Church');
+const fullName = person => [person.firstName, person.lastName].join(' ');
+fullName(student); // => Alonzo Church
+```
+
+### Person クラスと Student クラス
+
+```js
+class Person {
+  constructor(firstName, lastName, ssn, birthYear = null, address = null) {
+    this._firstName = firstName;
+    this._lastName = lastName;
+    this._ssn = ssn;
+    this._birthYear = birthYear;
+    this._address = address;
+  }
+
+  get ssn() {
+    return this._ssn;
+  }
+
+  get firstName() {
+    return this._firstName;
+  }
+
+  set firstName(firstName) {
+    this._firstName = firstName;
+    return this;
+  }
+
+  get lastName() {
+    return this._lastName;
+  }
+
+  get birthYear() {
+    return this._birthYear;
+  }
+
+  get address() {
+    return this._address;
+  }
+
+  get fullName() {
+    return `${this._firstName} ${this._lastName}`;
+  }
+}
+
+class Student extends Person {
+  constructor(
+    firstName,
+    lastName,
+    ssn,
+    school,
+    birthYear = null,
+    address = null
+  ) {
+    super(firstName, lastName, ssn, birthYear, address);
+    this._school = school;
+  }
+
+  get school() {
+    return this._school;
+  }
+}
+```
+
+###
+
+```js
+class Person {
+  constructor(firstName, lastName, ssn, birthYear = null, address = null) {
+    this._firstName = firstName;
+    this._lastName = lastName;
+    this._ssn = ssn;
+    this._birthYear = birthYear;
+    this._address = address;
+  }
+
+  get ssn() {
+    return this._ssn;
+  }
+
+  get firstName() {
+    return this._firstName;
+  }
+
+  set firstName(firstName) {
+    this._firstName = firstName;
+    return this;
+  }
+
+  get lastName() {
+    return this._lastName;
+  }
+
+  get birthYear() {
+    return this._birthYear;
+  }
+
+  get address() {
+    return this._address;
+  }
+
+  get fullName() {
+    return `${this._firstName} ${this._lastName}`;
+  }
+
+  set address(address) {
+    this._address = address;
+  }
+
+  // `peopleInSameCountry()`はインスタンスの`Person`オブジェクトと同じ国に住むすべての`Person`を返す
+  peopleInSameCountry(friends) {
+    let result = [];
+
+    friends.forEach(friend => {
+      if (this.address.country === friend.address.country) {
+        result.push(friend);
+      }
+    });
+
+    return result;
+  }
+}
+
+class Student extends Person {
+  constructor(
+    firstName,
+    lastName,
+    ssn,
+    school,
+    birthYear = null,
+    address = null
+  ) {
+    super(firstName, lastName, ssn, birthYear, address);
+    this._school = school;
+  }
+
+  get school() {
+    return this._school;
+  }
+
+  // `studentsInSameCountryAndSchool()`はインスタンスの`Student`オブジェクトと同じ国に住み、同じ学校に通うすべての`Student`を返す
+  studentsInSameCountryAndSchool(friends) {
+    const closeFriends = super.peopleInSameCountry(friends);
+    let result = [];
+
+    closeFriends.forEach(friend => {
+      if (this.school === friend.school) {
+        result.push(friend);
+      }
+    });
+  }
+}
+
+class Address {
+  constructor(country) {
+    this._country = country;
+  }
+
+  get country() {
+    return this._country;
+  }
+}
+
+const curry = new Student('Haskell', 'Curry', '111-11-1111', 'Pen State');
+curry.address = new Address('US');
+
+const turing = new Student('Alan', 'Turing', '222-22-2222', 'Princeton');
+turing.address = new Address('England');
+
+const church = new Student('Alonzo', 'Church', '333-33-3333', 'Princeton');
+church.address = new Address('US');
+
+const kleene = new Student('Stephan', 'Kleene', '444-44-4444', 'Princeton');
+kleene.address = new Address('US');
+
+church.studentsInSameCountryAndSchool([curry, turing, kleene]);
+```
+
+###
+
+```js
+function selector(country, school) {
+  return function(student) {
+    return student.address.country() === country && student.school() === school;
+  };
+}
+
+const findStudentsBy = function(friend, selector) {
+  return friends.filter(selector);
+};
+
+findStudentsBy([curry, turing, kleene], selector('US', 'Princeton'));
+```
+
+### 関数
+
+JavaScript の関数は全て Function 型のインスタンスである。
+
+```js
+var fruits = ['Coconut', 'apples'];
+// Unicodeでは大文字が小文字より前にソートされる
+fruits.sort(); // => ["Coconut", "apples"]
+
+var ages = [1, 10, 21, 2];
+// 数値は文字列に変換され、その文字列のコードポイント（一つ一つの文字割り当てられた値）でソートされる
+ages.sort(); // => [1, 10, 21, 2]
+
+// 比較関数（sort()内で実行される関数）は以下を判定する
+// - 比較関数が0未満の数を返す場足は、age1 は age2 より前になる。
+// - 比較関数が0を返す場足は、age1 と age2 の位置は変わらない。
+// - 比較関数が0より大きな数を返す場足は、age1 は age2 より後ろになる。
+ages.sort((age1, age2) => age1 - age2); // => [1, 2, 10, 21]
+```
+
+### 高階関数
+
+関数を引数として渡したり、戻り値として返す関数のこと。
+
+#### 例
+
+２つの引数を任意の関数をに渡せる高階関数
+
+```js
+function applyOperation(a, b, operation) {
+  return operation(a, b);
+}
+
+var multiplier = (a, b) => a * b;
+applyOperation(2, 3, multiplier); // => 6
+```
+
+```js
+function add(a) {
+  return function(b) {
+    return a + b;
+  };
+}
+
+add(3)(3); // => 6
+```
+
+命令形アプローチ
+
+```js
+function printPeopleInTheUs(people) {
+  people.forEach(person => {
+    if (person.country === 'US') {
+      console.log(person.name);
+    }
+  });
+}
+
+var person = { name: 'dom', country: 'US' };
+var person2 = { name: 'sam', country: 'JP' };
+var person3 = { name: 'tom', country: 'US' };
+
+printPeopleInTheUs([person, person2, person3]);
+// => dom
+// => tom
+```
+
+関数形アプローチ
+
+```js
+function printPeople(people, action) {
+  people.forEach(action);
+}
+
+function action(person) {
+  if (person.country === 'US') {
+    console.log(person.name);
+  }
+}
+
+var person = { name: 'dom', country: 'US' };
+var person2 = { name: 'sam', country: 'JP' };
+var person3 = { name: 'tom', country: 'US' };
+
+printPeople([person, person2, person3], action);
+// => dom
+// => tom
+```
+
+関数形アプローチ 2
+
+```js
+function printPeople(people, selector, printer) {
+  people.forEach(person => {
+    if (selector(person)) {
+      printer(person.name);
+    }
+  });
+}
+
+var inUs = person => person.country === 'US';
+
+var person = { name: 'dom', country: 'US' };
+var person2 = { name: 'sam', country: 'JP' };
+var person3 = { name: 'tom', country: 'US' };
+
+printPeople([person, person2, person3], inUs, console.log);
+// => dom
+// => tom
+```
